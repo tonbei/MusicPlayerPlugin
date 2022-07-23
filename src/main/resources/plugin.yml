@@ -1,0 +1,10 @@
+name: MusicPlayerPlugin
+version: '${project.version}'
+main: com.github.tonbei.music_player_plugin.MusicPlayerPlugin
+api-version: 1.17
+prefix: MusicPlayerPlugin
+authors: [ tonbei10 ]
+
+commands:
+  musicplayer:
+
