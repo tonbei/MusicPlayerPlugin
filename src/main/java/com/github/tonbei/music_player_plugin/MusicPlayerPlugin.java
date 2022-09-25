@@ -2,6 +2,10 @@ package com.github.tonbei.music_player_plugin;
 
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -10,10 +14,14 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -70,10 +78,17 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
 //                PacketUtil.sendFirstTrackAudioData(musicPlayerManager, Bukkit.getOnlinePlayers());
 //            }
         } else if (args[0].equalsIgnoreCase("list")) {
-            StringBuilder builder = new StringBuilder();
-            builder.append("MusicPlayer PlayList:\n");
-            musicPlayerManager.getTrackList().forEach(track -> builder.append("URL: ").append(track.getUrl()).append(" / ").append("Loop: ").append(track.isLoop()).append("\n"));
-            sender.sendMessage(builder.toString());
+            int index = 0;
+            ComponentBuilder message = new ComponentBuilder("MusicPlayer PlayList:");
+            for (Track track : musicPlayerManager.getTrackList()) {
+                String trackTitle = track.getTrack().getInfo().title;
+                message.append("\n" + ++index + ". ")
+                        .append(truncateBytes(trackTitle, Charset.forName("Shift_JIS"), 45))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(trackTitle)))
+                        .event(new ClickEvent(ClickEvent.Action.OPEN_URL, track.getUrl()))
+                        .append(" / Loop: " + track.isLoop()).event((HoverEvent) null).event((ClickEvent) null);
+            }
+            sender.spigot().sendMessage(message.create());
         } else {
             return false;
         }
@@ -94,13 +109,18 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent e) {
-        PacketUtil.sendStopPlayerData(Collections.singletonList(e.getPlayer()));
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerKick(PlayerKickEvent e) {
-        PacketUtil.sendStopPlayerData(Collections.singletonList(e.getPlayer()));
+    private String truncateBytes(String s, Charset charset, int maxBytes) {
+        ByteBuffer bb = ByteBuffer.allocate(maxBytes);
+        CharBuffer cb = CharBuffer.wrap(s);
+        CharsetEncoder encoder = charset.newEncoder()
+                .onMalformedInput(CodingErrorAction.REPLACE)
+                .onUnmappableCharacter(CodingErrorAction.REPLACE)
+                .reset();
+        CoderResult cr = encoder.encode(cb, bb, true);
+        if (!cr.isOverflow()) {
+            return s;
+        }
+        encoder.flush(bb);
+        return cb.flip().toString() + "...";
     }
 }
