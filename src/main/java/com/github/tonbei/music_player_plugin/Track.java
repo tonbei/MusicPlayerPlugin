@@ -1,23 +1,25 @@
 package com.github.tonbei.music_player_plugin;
 
+import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+
 public class Track {
 
-    private final String date;
+    private final AudioTrack track;
     private final String url;
     private final boolean loop;
 
-    public Track(String date, String url) {
-        this(date, url, false);
+    public Track(AudioTrack track) {
+        this(track, false);
     }
 
-    public Track(String date, String url, boolean loop) {
-        this.date = date;
-        this.url = url;
+    public Track(AudioTrack track, boolean loop) {
+        this.track = track;
+        this.url = track.getInfo().uri;
         this.loop = loop;
     }
 
-    public String getDate() {
-        return date;
+    public AudioTrack getTrack() {
+        return track;
     }
 
     public String getUrl() {
