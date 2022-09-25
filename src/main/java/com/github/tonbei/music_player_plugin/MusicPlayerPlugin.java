@@ -15,6 +15,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.StringUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -22,8 +23,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
 
@@ -94,6 +98,23 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (args.length == 1) {
+            return StringUtil.copyPartialMatches(args[0], Arrays.asList("play", "stop", "list", "next", "sync"), new ArrayList<>());
+        }
+
+        if (args[0].equalsIgnoreCase("play")) {
+            if (args.length == 2){
+                return Collections.singletonList("<URL>");
+            } else if (args.length == 3) {
+                return StringUtil.copyPartialMatches(args[2], Collections.singletonList("loop"), new ArrayList<>());
+            }
+        }
+
+        return super.onTabComplete(sender, command, alias, args);
     }
 
     public MusicPlayerManager getMusicPlayerManager() {
