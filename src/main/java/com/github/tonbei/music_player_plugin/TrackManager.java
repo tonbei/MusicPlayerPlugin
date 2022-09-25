@@ -31,6 +31,7 @@ public class TrackManager {
 
     public void stop() {
         timerTask.stop();
+        musicPlayerPlugin.getLogger().warning("Stop track");
         PacketUtil.sendStopPlayerData(Bukkit.getOnlinePlayers());
     }
 
@@ -52,7 +53,7 @@ public class TrackManager {
         if (hasNextTrack()) {
             Track track = queue.poll();
             timerTask.startTrack(track, false);
-            musicPlayerPlugin.getLogger().warning("Start Next Track: " + track.getUrl());
+            musicPlayerPlugin.getLogger().warning("Start next track: " + track.getUrl());
             PacketUtil.sendFirstTrackAudioData(musicPlayerPlugin.getMusicPlayerManager(), Bukkit.getOnlinePlayers());
             return track.getUrl();
         }

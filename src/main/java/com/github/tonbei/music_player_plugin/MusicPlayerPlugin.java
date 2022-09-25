@@ -62,25 +62,42 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
             if (args.length > 2 && args[2].equalsIgnoreCase("loop")) {
                 loop = true;
             }
-            musicPlayerManager.playTrack(url, loop);
+            musicPlayerManager.playTrack(url, loop, result -> {
+                switch (result.getFirst()) {
+                    case START:
+                        Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("Start track: " + result.getSecond()));
+                        break;
+                    case QUEUE:
+                        Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("Queue track: " + result.getSecond()));
+                        break;
+                    case NO_MATCH:
+                        sender.sendMessage("Nothing found by " + result.getSecond());
+                        break;
+                    case FAILED:
+                        sender.sendMessage("Could not play: " + result.getSecond());
+                        break;
+                }
+            });
         } else if (args[0].equalsIgnoreCase("stop")) {
-            if (musicPlayerManager.isPlaying()) musicPlayerManager.stop();
-//            PacketUtil.sendStopPlayerData(Bukkit.getOnlinePlayers());
+            if (musicPlayerManager.isPlaying()) {
+                musicPlayerManager.stop();
+                Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("Stop track"));
+            }
         } else if (args[0].equalsIgnoreCase("sync")) {
             Collection<? extends Player> receivers = sender instanceof Player ? Collections.singletonList((Player) sender) : Bukkit.getOnlinePlayers();
-
             if (!musicPlayerManager.isPlaying()) {
                 PacketUtil.sendStopPlayerData(receivers);
             } else {
                 PacketUtil.sendFirstTrackAudioData(musicPlayerManager, receivers);
             }
+            receivers.forEach(player -> player.sendMessage("Sync track data"));
         } else if (args[0].equalsIgnoreCase("next")) {
-            musicPlayerManager.playNextTrack();
-//            if (musicPlayerManager.playNextTrack() == null) {
-//                PacketUtil.sendStopPlayerData(Bukkit.getOnlinePlayers());
-//            } else {
-//                PacketUtil.sendFirstTrackAudioData(musicPlayerManager, Bukkit.getOnlinePlayers());
-//            }
+            String playUrl = musicPlayerManager.playNextTrack();
+            if (playUrl == null) {
+                Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("Stop track"));
+            } else {
+                Bukkit.getOnlinePlayers().forEach(player -> player.sendMessage("Start next track: " + playUrl));
+            }
         } else if (args[0].equalsIgnoreCase("list")) {
             int index = 0;
             ComponentBuilder message = new ComponentBuilder("MusicPlayer PlayList:");
@@ -127,6 +144,7 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
             PacketUtil.sendStopPlayerData(Collections.singletonList(e.getPlayer()));
         } else {
             PacketUtil.sendFirstTrackAudioData(musicPlayerManager, Collections.singletonList(e.getPlayer()));
+            e.getPlayer().sendMessage("Start track: " + musicPlayerManager.getPlayingTrackUrl());
         }
     }
 

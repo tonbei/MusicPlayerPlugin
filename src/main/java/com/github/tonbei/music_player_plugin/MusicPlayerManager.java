@@ -1,5 +1,6 @@
 package com.github.tonbei.music_player_plugin;
 
+import com.comphenix.protocol.wrappers.Pair;
 import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
@@ -18,6 +19,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public class MusicPlayerManager {
@@ -90,29 +92,43 @@ public class MusicPlayerManager {
         return trackManager.nextTrack();
     }
 
-    public void playTrack(String uri, boolean loop) {
+    public void playTrack(String uri, boolean loop, Consumer<Pair<AudioLoadResult, String>> consumer) {
         audioPlayerManager.loadItem(uri, new AudioLoadResultHandler() {
             @Override
             public void trackLoaded(AudioTrack track) {
-                trackManager.setTrack(track, loop);
+                if (trackManager.setTrack(track, loop)) {
+                    consumer.accept(new Pair<>(AudioLoadResult.START, track.getInfo().uri));
+                } else {
+                    consumer.accept(new Pair<>(AudioLoadResult.QUEUE, track.getInfo().uri));
+                }
             }
 
             @Override
             public void playlistLoaded(AudioPlaylist playlist) {
                 for (AudioTrack track : playlist.getTracks()) {
-                    trackManager.setTrack(track, false);
+                    if (trackManager.setTrack(track, false)) {
+                        consumer.accept(new Pair<>(AudioLoadResult.START, track.getInfo().uri));
+                    } else {
+                        consumer.accept(new Pair<>(AudioLoadResult.QUEUE, track.getInfo().uri));
+                    }
                 }
             }
 
             @Override
             public void noMatches() {
                 logger.warning("Nothing found by " + uri);
+                consumer.accept(new Pair<>(AudioLoadResult.NO_MATCH, uri));
             }
 
             @Override
             public void loadFailed(FriendlyException ex) {
                 logger.severe("Could not play: " + ex.getMessage());
+                consumer.accept(new Pair<>(AudioLoadResult.FAILED, ex.getMessage()));
             }
         });
+    }
+
+    public enum AudioLoadResult {
+        START, QUEUE, NO_MATCH, FAILED
     }
 }
