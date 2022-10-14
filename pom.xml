@@ -43,11 +43,43 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib/dependencies</outputDirectory>
+                            <includeGroupIds>
+                                com.github.walkyst,
+                                com.fasterxml.jackson.core,
+                                org.apache.httpcomponents,
+                                org.mozilla,
+                                org.slf4j,
+                                commons-io,
+                                commons-logging,
+                                commons-codec,
+                                org.jsoup,
+                                net.iharder
+                            </includeGroupIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>${project.build.directory}/lib</directory>
             </resource>
         </resources>
     </build>
@@ -88,7 +120,7 @@
             <groupId>com.github.walkyst</groupId>
             <artifactId>lavaplayer-fork</artifactId>
             <version>1.3.98.4</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>

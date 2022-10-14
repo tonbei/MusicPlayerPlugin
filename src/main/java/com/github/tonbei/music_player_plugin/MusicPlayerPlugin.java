@@ -36,6 +36,9 @@ public final class MusicPlayerPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        Bukkit.getLogger().warning(getClassLoader().toString());
+        DependencyManager.load(this.getFile(), this.getClassLoader());
+
         this.getServer().getPluginManager().registerEvents(this, this);
         manager = ProtocolLibrary.getProtocolManager();
         manager.addPacketListener(new MusicPlayerPacketListener(this));
